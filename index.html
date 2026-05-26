@@ -1,326 +1,404 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>مترجم كتب الأزياء</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مترجم PDF بالذكاء الاصطناعي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Cairo', sans-serif; background: #f5f5f5; color: #111; padding: 24px 16px 60px; }
+.wrap { max-width: 680px; margin: 0 auto; }
+h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+.sub { font-size: 0.78rem; color: #888; margin-bottom: 20px; letter-spacing: 1px; }
+.line { width: 30px; height: 3px; background: #111; border-radius: 2px; margin-bottom: 24px; }
 
-    <style>
-        :root {
-            --bg: #F7F7F7;
-            --white: #FFFFFF;
-            --black: #111111;
-            --gray: #777777;
-            --lightGray: #E4E4E4;
-            --ultraLight: #F0F0F0;
-            --green: #1A9E55;
-            --red: #D93535;
-        }
+/* API Key Box */
+.apikey-box {
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.apikey-box label { display: block; font-size: 0.68rem; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.apikey-box input {
+  width: 100%; border: 1px solid #e8e8e8; border-radius: 8px;
+  padding: 10px 12px; font-family: 'Cairo', sans-serif;
+  font-size: 0.85rem; outline: none; direction: ltr; text-align: left;
+}
+.apikey-box input:focus { border-color: #111; }
+.apikey-hint { font-size: 0.72rem; color: #aaa; margin-top: 6px; }
+.apikey-hint a { color: #555; }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Cairo', sans-serif;
-        }
+/* Upload */
+.upload-box {
+  border: 2px dashed #ddd; border-radius: 12px; padding: 32px 16px;
+  text-align: center; cursor: pointer; background: white;
+  transition: all 0.15s; margin-bottom: 16px;
+}
+.upload-box:hover, .upload-box.over { border-color: #111; background: #fafafa; }
+.upload-box .icon { font-size: 2rem; margin-bottom: 8px; }
+.upload-box .title { font-weight: 600; margin-bottom: 4px; }
+.upload-box .hint { font-size: 0.78rem; color: #888; }
 
-        body {
-            background: var(--bg);
-            padding: 28px 16px;
-            color: var(--black);
-        }
+/* Settings */
+.settings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.setting-card { background: white; border: 1px solid #e8e8e8; border-radius: 10px; padding: 10px 14px; }
+.setting-card label { display: block; font-size: 0.62rem; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+.setting-card select, .setting-card input {
+  width: 100%; border: none; background: transparent;
+  font-family: 'Cairo', sans-serif; font-size: 0.9rem; font-weight: 600;
+  color: #111; outline: none; text-align: right;
+}
 
-        .container {
-            max-width: 640px;
-            margin: 0 auto;
-        }
+.info-bar {
+  background: white; border: 1px solid #e8e8e8; border-radius: 8px;
+  padding: 9px 14px; margin-bottom: 14px; font-size: 0.8rem; color: #888;
+  display: none; justify-content: space-between; align-items: center;
+}
+.info-bar.show { display: flex; }
 
-        .header {
-            margin-bottom: 24px;
-        }
+.btn {
+  width: 100%; padding: 14px; border: none; border-radius: 10px;
+  font-family: 'Cairo', sans-serif; font-size: 0.95rem; font-weight: 700;
+  cursor: pointer; margin-bottom: 16px; transition: all 0.15s; min-height: 50px;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-primary { background: #111; color: white; }
+.btn-primary:hover:not(:disabled) { background: #333; }
+.btn-primary:disabled { background: #ddd; color: #999; cursor: not-allowed; }
 
-        .header h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
+/* Progress */
+.progress-box { background: white; border: 1px solid #e8e8e8; border-radius: 10px; padding: 16px; margin-bottom: 16px; display: none; }
+.progress-box.show { display: block; }
+.progress-top { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 8px; }
+.progress-track { height: 4px; background: #eee; border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+.progress-fill { height: 100%; background: #111; border-radius: 3px; width: 0%; transition: width 0.3s; }
+.log { max-height: 90px; overflow-y: auto; font-size: 0.7rem; font-family: monospace; color: #999; }
+.log .ok { color: #1a9e55; }
+.log .err { color: #d93535; }
+.log .info { color: #111; }
 
-        .upload-box {
-            border: 2px dashed var(--lightGray);
-            border-radius: 12px;
-            padding: 32px 16px;
-            text-align: center;
-            cursor: pointer;
-            background: var(--white);
-            margin-bottom: 16px;
-        }
-
-        .settings-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 14px;
-        }
-
-        .setting-card {
-            background: var(--white);
-            border: 1px solid var(--lightGray);
-            border-radius: 10px;
-            padding: 10px 12px;
-        }
-
-        .setting-card label {
-            display: block;
-            font-size: 0.65rem;
-            color: var(--gray);
-            margin-bottom: 5px;
-        }
-
-        .setting-card select, .setting-card input {
-            width: 100%;
-            border: none;
-            background: transparent;
-            font-size: 0.88rem;
-            font-weight: 700;
-            outline: none;
-        }
-
-        .btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 12px 16px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.9rem;
-            width: 100%;
-        }
-
-        .btn-primary { background: var(--black); color: var(--white); }
-        .btn-disabled { background: var(--lightGray); color: var(--gray); cursor: not-allowed; }
-        .btn-ghost { background: var(--ultraLight); color: var(--black); }
-        .btn-outline { background: var(--white); color: var(--black); border: 1.5px solid var(--lightGray); }
-
-        .progress-box {
-            background: var(--white);
-            border: 1px solid var(--lightGray);
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 16px;
-            display: none;
-        }
-
-        .progress-bar-container {
-            height: 6px;
-            background: var(--lightGray);
-            border-radius: 3px;
-            margin-top: 8px;
-            overflow: hidden;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: var(--black);
-            width: 0%;
-            transition: width 0.2s;
-        }
-
-        .results-container { margin-top: 20px; }
-        .result-card {
-            background: var(--white);
-            border: 1px solid var(--lightGray);
-            border-radius: 12px;
-            padding: 14px 16px;
-            margin-bottom: 10px;
-        }
-
-        .action-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .preview-box {
-            margin-top: 12px;
-            background: var(--ultraLight);
-            border-radius: 8px;
-            padding: 14px;
-            display: none;
-            max-height: 250px;
-            overflow-y: auto;
-            font-size: 0.85rem;
-            line-height: 1.6;
-            text-align: right;
-        }
-    </style>
+/* Results */
+#results { display: none; }
+#results.show { display: block; }
+.results-title { font-size: 0.66rem; letter-spacing: 3px; color: #888; text-transform: uppercase; margin-bottom: 14px; }
+.book { background: white; border: 1px solid #e8e8e8; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+.book-header { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 10px; }
+.book-num { font-size: 1rem; font-weight: 700; color: #ddd; min-width: 26px; }
+.book-title { font-weight: 600; font-size: 0.9rem; flex: 1; }
+.book-badge { font-size: 0.7rem; color: #1a9e55; }
+.pages-container { overflow-x: auto; padding: 16px; }
+.pages-row { display: flex; gap: 12px; min-width: max-content; }
+.page-card { width: 280px; flex-shrink: 0; }
+.page-label { font-size: 0.68rem; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; text-align: center; }
+.page-image { width: 100%; border-radius: 6px; border: 1px solid #eee; display: block; }
+.page-arabic {
+  width: 280px; flex-shrink: 0; background: #fafafa;
+  border: 1px solid #eee; border-radius: 6px; padding: 14px;
+  font-size: 0.85rem; line-height: 1.9; color: #111;
+  direction: rtl; text-align: right; min-height: 200px;
+}
+.book-actions { padding: 12px 16px; border-top: 1px solid #f0f0f0; display: flex; gap: 8px; }
+.action-btn {
+  flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #e8e8e8;
+  background: white; font-family: 'Cairo', sans-serif; font-size: 0.8rem;
+  font-weight: 600; cursor: pointer; text-align: center; color: #111;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 42px; -webkit-tap-highlight-color: transparent;
+  text-decoration: none;
+}
+.action-btn.dark { background: #111; color: white; border-color: #111; }
+</style>
 </head>
 <body>
+<div class="wrap">
+  <h1>مترجم PDF</h1>
+  <p class="sub">POWERED BY CLAUDE AI · ARABIC TRANSLATION</p>
+  <div class="line"></div>
 
-<div class="container">
-    <div class="header">
-        <h1>مترجم كتب الأزياء والموضة</h1>
+  <!-- API Key -->
+  <div class="apikey-box">
+    <label>🔑 Anthropic API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off">
+    <p class="apikey-hint">احصل على مفتاحك من <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> — لا يُحفظ ولا يُرسل لأي مكان غير Anthropic</p>
+  </div>
+
+  <!-- Upload -->
+  <div class="upload-box" id="uploadBox" onclick="document.getElementById('fileInput').click()"
+    ondragover="event.preventDefault();this.classList.add('over')"
+    ondragleave="this.classList.remove('over')"
+    ondrop="onDrop(event)">
+    <div class="icon">📄</div>
+    <div class="title" id="uploadTitle">اضغط لرفع ملف PDF</div>
+    <div class="hint" id="uploadHint">أو اسحب وأفلت هنا</div>
+    <input type="file" id="fileInput" accept="application/pdf" style="display:none" onchange="onFileChange(event)">
+  </div>
+
+  <!-- Settings -->
+  <div class="settings">
+    <div class="setting-card">
+      <label>صفحات / جزء</label>
+      <input type="number" id="pageCount" value="10" min="1" max="50">
     </div>
-
-    <div class="upload-box" id="uploadBox">
-        <div class="icon" style="font-size: 2rem;">📄</div>
-        <div class="title" id="uploadTitle" style="font-weight: 600; margin-top: 8px;">اضغط هنا لرفع ملف الـ PDF</div>
-        <div class="desc" id="uploadDesc" style="font-size: 0.75rem; color: var(--gray);">سيتم استخراج النصوص وترجمتها</div>
-        <input type="file" id="fileInput" accept=".pdf" style="display: none;">
+    <div class="setting-card">
+      <label>لغة المصدر</label>
+      <select id="srcLang">
+        <option value="English">إنجليزية</option>
+        <option value="French">فرنسية</option>
+        <option value="Italian">إيطالية</option>
+        <option value="Spanish">إسبانية</option>
+        <option value="German">ألمانية</option>
+      </select>
     </div>
+  </div>
 
-    <div class="settings-grid">
-        <div class="setting-card">
-            <label>ترجمة إلى</label>
-            <select id="targetLang">
-                <option value="ar">العربية (ترجمة فنية مدمجة)</option>
-            </select>
-        </div>
-        <div class="setting-card">
-            <label>تقسيم الأجزاء</label>
-            <input type="number" id="pageCount" value="10">
-        </div>
+  <div class="info-bar" id="infoBar">
+    <span id="infoText">—</span>
+    <span style="font-size:0.72rem">⚡ Claude Vision</span>
+  </div>
+
+  <button class="btn btn-primary" id="startBtn" disabled onclick="startTranslation()">ابدأ الترجمة</button>
+
+  <!-- Progress -->
+  <div class="progress-box" id="progressBox">
+    <div class="progress-top">
+      <span id="progressLabel" style="color:#888;font-size:0.8rem">جاري المعالجة...</span>
+      <span id="progressPct" style="font-weight:700">0%</span>
     </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="log" id="logBox"></div>
+  </div>
 
-    <button class="btn btn-disabled" id="translateBtn" disabled style="margin-bottom: 16px;">ابدأ معالجة الكتاب</button>
-
-    <div class="progress-box" id="progressBox">
-        <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
-            <span id="progressLabel">جاري القراءة...</span>
-            <span id="progressPercent" style="font-weight: 700;">0%</span>
-        </div>
-        <div class="progress-bar-container">
-            <div class="progress-bar" id="progressBar"></div>
-        </div>
-    </div>
-
-    <div class="results-container" id="resultsContainer" style="display: none;">
-        <div style="font-size: 0.8rem; color: var(--gray); margin-bottom: 8px;">الملفات المستخرجة والمترجمة:</div>
-        <div id="resultsList"></div>
-    </div>
+  <!-- Results -->
+  <div id="results">
+    <div class="results-title">النتائج</div>
+    <div id="segList"></div>
+  </div>
 </div>
 
 <script>
-    if (window.pdfjsLib) {
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-    }
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-    let pdfInstance = null;
-    let fileData = { name: '', totalPages: 0 };
+let pdfDoc = null;
 
-    const uploadBox = document.getElementById('uploadBox');
-    const fileInput = document.getElementById('fileInput');
-    const translateBtn = document.getElementById('translateBtn');
+function getApiKey() {
+  return document.getElementById('apiKey').value.trim();
+}
 
-    uploadBox.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadBox').classList.remove('over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') loadPDF(file);
+}
 
-    function handleFile(file) {
-        if (!file || file.type !== "application/pdf") return;
-        fileData.name = file.name;
-        document.getElementById('uploadTitle').innerText = fileData.name;
-        
-        const reader = new FileReader();
-        reader.onload = async function(e) {
-            const bytes = new Uint8Array(e.target.result);
-            pdfInstance = await pdfjsLib.getDocument({ data: bytes }).promise;
-            fileData.totalPages = pdfInstance.numPages;
-            document.getElementById('uploadDesc').innerText = `${fileData.totalPages} صفحة جاهزة للمعالجة`;
-            translateBtn.disabled = false;
-            translateBtn.className = "btn btn-primary";
-        };
-        reader.readAsArrayBuffer(file);
-    }
+function onFileChange(e) {
+  const file = e.target.files[0];
+  if (file) loadPDF(file);
+  e.target.value = '';
+}
 
-    async function extractText(pageNum) {
-        try {
-            const page = await pdfInstance.getPage(pageNum);
-            const tc = await page.getTextContent();
-            return tc.items.map(i => i.str).join(" ").trim();
-        } catch { return ""; }
-    }
+async function loadPDF(file) {
+  try {
+    const buf = await file.arrayBuffer();
+    pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+    document.getElementById('uploadTitle').textContent = file.name;
+    document.getElementById('uploadHint').textContent =
+      `${pdfDoc.numPages} صفحة · ${(file.size/1024/1024).toFixed(1)} MB`;
+    document.getElementById('infoBar').classList.add('show');
+    updateInfo();
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('results').classList.remove('show');
+    document.getElementById('segList').innerHTML = '';
+    setProgress(0, '');
+    document.getElementById('progressBox').classList.remove('show');
+    clearLog();
+  } catch(e) { alert('خطأ في فتح الملف: ' + e.message); }
+}
 
-    // محرك مدمج ومستقر لترجمة نصوص الموضة والأزياء دون استدعاء سيرفرات خارجية لمنع الأخطاء
-    function localTranslate(text, pageNum) {
-        if (!text || text.length < 5) {
-            return `[صفحة رقم ${pageNum}]\n(هذه الصفحة عبارة عن أرشيف صور، أو رسومات وتصاميم أزياء توضيحية بدون نصوص)`;
-        }
-        
-        // تنظيف النص وتجهيز المعاينة الفنية المدمجة لتبسيط القراءة والنسخ
-        return `[صفحة رقم ${pageNum} - النص المستخرج والمعرب الفني]\nالنص الأصلي المُستخرج:\n"${text.substring(0, 300)}..."\n\nالترجمة الفنية المستقرة:\nتم استخراج نصوص ومصطلحات الأزياء والتصميم لهذه الصفحة بنجاح. يمكنكِ الآن نسخ النص الأصلي الموضح أعلاه وترجمته مباشرة للاحتفاظ بأعلى دقة للمصطلحات الفنية وتفاصيل خطوط الموضة والأقمشة المذكورة في أرشيف الكتاب الداخلي ومراجعتها بكل سهولة وموثوقية بالكامل.`;
-    }
+function updateInfo() {
+  if (!pdfDoc) return;
+  const n = pdfDoc.numPages;
+  const size = Math.max(1, parseInt(document.getElementById('pageCount').value) || 10);
+  const segs = Math.ceil(n / size);
+  document.getElementById('infoText').textContent = `${n} صفحة · سيُقسَّم إلى ${segs} جزء`;
+}
 
-    translateBtn.addEventListener('click', async () => {
-        translateBtn.disabled = true;
-        translateBtn.innerText = "⏳ جاري استخراج وترجمة الصفحات...";
-        document.getElementById('progressBox').style.display = "block";
-        document.getElementById('resultsList').innerHTML = "";
-        
-        const size = parseInt(document.getElementById('pageCount').value) || 10;
-        let chunkIndex = 0;
+document.getElementById('pageCount').addEventListener('input', updateInfo);
 
-        for (let i = 1; i <= fileData.totalPages; i += size) {
-            chunkIndex++;
-            const start = i;
-            const end = Math.min(i + size - 1, fileData.totalPages);
-            let chunkTextArray = [];
+function addLog(msg, type = '') {
+  const box = document.getElementById('logBox');
+  const d = document.createElement('div');
+  if (type) d.className = type;
+  d.textContent = `${new Date().toLocaleTimeString('ar')} · ${msg}`;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
 
-            for (let p = start; p <= end; p++) {
-                const pct = Math.round((p / fileData.totalPages) * 100);
-                document.getElementById('progressBar').style.width = pct + "%";
-                document.getElementById('progressPercent').innerText = pct + "%";
-                document.getElementById('progressLabel').innerText = `جاري معالجة صفحة ${p} من أصل ${fileData.totalPages}`;
+function clearLog() { document.getElementById('logBox').innerHTML = ''; }
 
-                const origText = await extractText(p);
-                const translatedText = localTranslate(origText, p);
-                chunkTextArray.push(translatedText);
-            }
+function setProgress(pct, label) {
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = Math.round(pct) + '%';
+  if (label !== undefined) document.getElementById('progressLabel').textContent = label;
+}
 
-            const finalText = chunkTextArray.join("\n\n====================\n\n");
-            renderCard(chunkIndex, `الألبوم / الجزء رقم ${chunkIndex} (صفحات ${start}–${end})`, finalText);
-        }
+function getSegments() {
+  const n = pdfDoc.numPages;
+  const size = Math.max(1, parseInt(document.getElementById('pageCount').value) || 10);
+  const segs = [];
+  for (let i = 1; i <= n; i += size)
+    segs.push({ start: i, end: Math.min(i + size - 1, n) });
+  return segs;
+}
 
-        document.getElementById('progressLabel').innerText = "اكتمل استخراج وتعريب المحتوى الفني بنجاح! ✓";
-        translateBtn.disabled = false;
-        translateBtn.innerText = "ابدأ معالجة الكتاب";
+async function pageToImage(pageNum) {
+  const page = await pdfDoc.getPage(pageNum);
+  const viewport = page.getViewport({ scale: 1.5 });
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+  return { dataUrl, base64: dataUrl.split(',')[1] };
+}
+
+async function translatePage(base64, pageNum) {
+  const apiKey = getApiKey();
+  if (!apiKey) { addLog('أدخل الـ API Key أولاً', 'err'); return ''; }
+
+  const lang = document.getElementById('srcLang').value;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-calls': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+            { type: 'text', text: `هذه صفحة من كتاب أزياء باللغة ${lang}. استخرج كل النص الموجود في الصورة وترجمه إلى العربية ترجمة احترافية دقيقة مع الحفاظ على مصطلحات الأزياء والموضة. حافظ على نفس هيكل الفقرات والعناوين. أعطني الترجمة العربية فقط بدون أي مقدمة.` }
+          ]
+        }]
+      })
     });
 
-    function renderCard(idx, title, textContent) {
-        document.getElementById('resultsContainer').style.display = "block";
-        const list = document.getElementById('resultsList');
-        const card = document.createElement('div');
-        card.className = "result-card";
-        card.innerHTML = `
-            <div style="font-weight: 600; font-size: 0.95rem;">${title}</div>
-            <div style="font-size: 0.75rem; color: var(--green); margin-top: 2px;">جاهز للعرض والنسخ المباشر ✓</div>
-            <div class="action-grid">
-                <button class="btn btn-ghost" id="previewBtn-${idx}">👁 معاينة وقراءة النص</button>
-                <button class="btn btn-outline" id="copyBtn-${idx}">📋 نسخ المحتوى الكامل</button>
-            </div>
-            <div class="preview-box" id="previewBox-${idx}">${textContent.replace(/\n/g, '<br>')}</div>
-        `;
-        list.appendChild(card);
+    const d = await res.json();
+    if (d.error) { addLog(`API ص${pageNum}: ${d.error.message}`, 'err'); return ''; }
+    return d.content?.[0]?.text?.trim() || '';
+  } catch(e) {
+    addLog(`خطأ ص${pageNum}: ${e.message}`, 'err');
+    return '';
+  }
+}
 
-        const pBtn = card.querySelector(`#previewBtn-${idx}`);
-        const pBox = card.querySelector(`#previewBox-${idx}`);
-        pBtn.addEventListener('click', () => {
-            pBox.style.display = pBox.style.display === "block" ? "none" : "block";
-        });
+async function startTranslation() {
+  if (!pdfDoc) return;
+  if (!getApiKey()) { alert('أدخل الـ API Key أولاً'); return; }
 
-        const cBtn = card.querySelector(`#copyBtn-${idx}`);
-        cBtn.addEventListener('click', () => {
-            navigator.clipboard.writeText(textContent).then(() => {
-                cBtn.innerText = "✓ تم النسخ بنجاح";
-                setTimeout(() => cBtn.innerText = "📋 نسخ المحتوى الكامل", 2000);
-            });
-        });
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('progressBox').classList.add('show');
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('segList').innerHTML = '';
+  clearLog();
+
+  const segs = getSegments();
+  addLog(`بدء المعالجة · ${segs.length} جزء`, 'info');
+
+  for (let si = 0; si < segs.length; si++) {
+    const seg = segs[si];
+    addLog(`▶ الجزء ${si+1}: صفحات ${seg.start}–${seg.end}`, 'info');
+
+    const card = document.createElement('div');
+    card.className = 'book';
+    card.innerHTML = `
+      <div class="book-header">
+        <div class="book-num">${String(si+1).padStart(2,'0')}</div>
+        <div class="book-title">صفحات ${seg.start}–${seg.end}</div>
+        <div class="book-badge" id="badge-${si}">جاري...</div>
+      </div>
+      <div class="pages-container">
+        <div class="pages-row" id="row-${si}"></div>
+      </div>
+      <div class="book-actions">
+        <button class="action-btn" onclick="printSeg(${si})">🖨 طباعة / حفظ PDF</button>
+      </div>
+    `;
+    document.getElementById('segList').appendChild(card);
+    document.getElementById('results').classList.add('show');
+
+    const row = document.getElementById(`row-${si}`);
+
+    for (let p = seg.start; p <= seg.end; p++) {
+      const pct = ((si + (p - seg.start) / (seg.end - seg.start + 1)) / segs.length) * 100;
+      setProgress(pct, `الجزء ${si+1} · ترجمة صفحة ${p}`);
+      addLog(`قراءة وترجمة صفحة ${p}...`);
+
+      const imgData = await pageToImage(p);
+      const arabic = await translatePage(imgData.base64, p);
+
+      const origCard = document.createElement('div');
+      origCard.className = 'page-card';
+      origCard.innerHTML = `
+        <div class="page-label">أصلية · ${p}</div>
+        <img class="page-image" src="${imgData.dataUrl}">
+      `;
+
+      const arCard = document.createElement('div');
+      arCard.innerHTML = `
+        <div class="page-label">ترجمة · ${p}</div>
+        <div class="page-arabic">${arabic || '<span style="color:#bbb">لا يوجد نص</span>'}</div>
+      `;
+
+      row.appendChild(origCard);
+      row.appendChild(arCard);
+      addLog(`✓ صفحة ${p}`, 'ok');
     }
-</script>
 
+    document.getElementById(`badge-${si}`).textContent = '✓ مكتمل';
+  }
+
+  setProgress(100, 'اكتملت الترجمة ✓');
+  addLog('🎉 انتهت جميع الأجزاء!', 'ok');
+  document.getElementById('startBtn').disabled = false;
+}
+
+function printSeg(idx) {
+  const card = document.querySelectorAll('.book')[idx];
+  if (!card) return;
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html>
+<html dir="rtl">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  body { font-family: Cairo, sans-serif; padding: 20px; background: white; }
+  .pages-row { display: flex; flex-wrap: wrap; gap: 16px; }
+  .page-card { width: 45%; }
+  .page-arabic { width: 45%; background:#fafafa; padding:12px; border:1px solid #eee; border-radius:6px; font-size:0.85rem; line-height:1.9; direction:rtl; min-height:200px; }
+  .page-label { font-size:0.68rem; color:#888; margin-bottom:6px; text-align:center; }
+  img { width:100%; border-radius:4px; border:1px solid #eee; }
+  @media print { body { padding:0; } }
+</style>
+</head>
+<body>
+${card.querySelector('.pages-container').innerHTML}
+<script>window.onload=()=>{ window.print(); }<\/script>
+</body></html>`);
+  win.document.close();
+}
+</script>
 </body>
 </html>
